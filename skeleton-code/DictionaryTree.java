@@ -8,6 +8,8 @@ public class DictionaryTree {
 
     private Map<Character, DictionaryTree> children = new LinkedHashMap<>();
     
+    
+    //A word object which sores the complete word and popularity of this dictionary tree
     public Word myWord = new Word();
     
     /**
@@ -17,14 +19,20 @@ public class DictionaryTree {
      * @param word the word to insert
      */
     void insert(String word) { //DONE
-        
-        if(word.equals(null)){
+        Optional<String> optWord = Optional.ofNullable(word);
+        if(!optWord.isPresent() || optWord.get().length() == 0){
             return;
         }
         
-        insertionHelper(word,word);
+        insertionHelper(optWord.get(),optWord.get());
     }
     
+    
+    /**
+     * Inserts each letter of the word into the tree by checking if ot already exists there or not
+     * @param currentPortion The current portion of the word which we are considering deleting.
+     * @param fullWord The reference to the full word which we want to store in the tree.
+     */
     void insertionHelper(String currentPortion, String fullWord){
         if(currentPortion.length() == 1){
             if(!children.containsKey(currentPortion.charAt(0))){
@@ -51,12 +59,23 @@ public class DictionaryTree {
      * @param popularity the popularity of the inserted word
      */
     void insert(String word, int popularity) {
-        if(word.equals(null)){
+        Optional<String> optWord = Optional.ofNullable(word);
+        Optional<Integer> optPop = Optional.ofNullable(popularity);
+        if(!optWord.isPresent() || optWord.get().length() == 0 || !optPop.isPresent()){
             return;
         }
-        popInsertionHelper(word,word,popularity);
+        popInsertionHelper(optWord.get(),optWord.get(),optPop.get());
     }
     
+    /** Helper function for inserting a word of a given poularity
+    * Takes the popularity of a given word and will put each letter into the tree if it is not contained.
+    * When we get to the end we insert the reference to the full word and the popularity
+    *
+    * @param currentPortion the current portion of the full word which we are inserting.
+     * @param fullWord the fullword which we want to insert into the tree
+     * @param popularity the popularity of the word to be inserted.
+     *
+    */
     void popInsertionHelper(String currentPortion, String fullWord, Integer popularity){
         if(currentPortion.length() == 1){
             if(!children.containsKey(currentPortion.charAt(0))){
@@ -87,10 +106,11 @@ public class DictionaryTree {
      * @return whether or not the parent can delete this node from its children
      */
     boolean remove(String word) { //DONE
-        if(word.equals(null)){
+        Optional<String> optWord = Optional.ofNullable(word);
+        if(!optWord.isPresent() || optWord.get().length() == 0){
             return false;
         }
-        if(contains(word)){
+        if(contains(optWord.get())){
             int counter = word.length() - 1;
             for (int i = counter; i >= 0; i--) {
                 removalHelper(word.substring(0, i + 1), word.charAt(i), word);
@@ -143,6 +163,12 @@ public class DictionaryTree {
      * @return true if the specified word is stored in this tree; false otherwise
      */
     boolean contains(String word) { //DONE
+    
+        Optional<String> optWord = Optional.ofNullable(word);
+        if(!optWord.isPresent() || optWord.get().length() == 0){
+            return false;
+        }
+        
         if(word.length() == 1){
             return children.containsKey(word.charAt(0)) && children.get(word.charAt(0)).myWord.completeWord.isPresent();
         }else{
@@ -160,7 +186,8 @@ public class DictionaryTree {
      * if no such word is found.
      */
     Optional<String> predict(String prefix) { //DONE
-        if(prefix.equals(null)){
+        Optional<String> optPrefix = Optional.ofNullable(prefix);
+        if(!optPrefix.isPresent() || optPrefix.get().length() == 0){
             return Optional.empty();
         }
         if(prefix.length() == 1){
@@ -170,6 +197,12 @@ public class DictionaryTree {
         }
     }
     
+    
+    /**
+     * When the helper function is called, we have already traversed the tree up to a point where we are at the end of the string we want to predict
+     * This allows us to get all the words that exist after the end of the prefix and return any one of them.
+     * @return the optional string of the word we want to return.
+     */
     Optional<String> predictionHelper(){
         Optional<String> empty = Optional.of("No Prediction");
         List<String> allWords = allWords();
@@ -192,9 +225,13 @@ public class DictionaryTree {
      * @return the (at most) n most popular words with the specified prefix
      */
     List<String> predict(String prefix, int n) {
-        if(prefix.equals(null)){
+    
+        Optional<String> optPrefix = Optional.ofNullable(prefix);
+        Optional<Integer> optPop = Optional.ofNullable(n);
+        if(!optPrefix.isPresent() || optPrefix.get().length() == 0 || !optPop.isPresent()){
             return new ArrayList<>();
         }
+
         if(prefix.length() == 1){
             return children.get(prefix.charAt(0)).predictPopHelper(n);
         }else{
@@ -202,6 +239,13 @@ public class DictionaryTree {
         }
     }
     
+    
+    /**
+     * Acts in the same way as the previous prediction helper method however this time we sort the list of all the words by their popularities
+     * The higher the popularity, the more popular the word and we return the first n words
+     * @param n the n most popular words we want to return
+     * @return the list of popular words.
+     */
     List<String> predictPopHelper(int n){
         List<Word> allWords = popAllWords();
         List<String> finals = new ArrayList<>();
@@ -209,13 +253,24 @@ public class DictionaryTree {
             return null;
         }else{
             Collections.sort(allWords, new Word());
-            for(int i = 0; i < n; i++){
-                finals.add(allWords.get(i).completeWord.get());
+            if(allWords.size() < n){
+                for(Word w : allWords){
+                    finals.add(w.completeWord.get());
+                }
+            }else{
+                for(int i = 0; i < n; i++){
+                    finals.add(allWords.get(i).completeWord.get());
+                }
             }
             return finals;
         }
     }
     
+    
+    /**
+     * Acts similarly to the allWords() method however here we return a list of word objects which we can use to sort by popularity later.
+     * @return the list of word objects.
+     */
     List<Word> popAllWords(){ //DONE
         
         List<Word> a = new ArrayList<>();
@@ -248,7 +303,9 @@ public class DictionaryTree {
             }
             return numberOfLeaves;
         });
-
+    
+        // My implementation before folding
+        
 //        Integer numberOfLeaves = 0;
 //        if(children.size() == 0){
 //            numberOfLeaves = 1;
@@ -274,6 +331,10 @@ public class DictionaryTree {
         
             return maximum;
         });
+    
+    
+    
+        // My implementation before folding
         
 //        int maximum = Integer.MIN_VALUE;
 //
@@ -288,22 +349,24 @@ public class DictionaryTree {
      */
     int height() { //DONE
     
-        return fold((tree, result) -> {
-            int height = -1;
+        // My implementation before folding
         
-            for (int i : result) {
-                height = Math.max(height, i);
-            }
-        
-            return height + 1;
-        });
+//        return fold((tree, result) -> {
+//            int height = -1;
+//
+//            for (int i : result) {
+//                height = Math.max(height, i);
+//            }
+//
+//            return height + 1;
+//        });
 
-//        int height = -1;
-//
-//        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
-//            height = Math.max(height,e.getValue().height());
-//
-//        return 1+height;
+        int height = -1;
+
+        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
+            height = Math.max(height,e.getValue().height());
+
+        return 1+height;
     }
 
     /**
@@ -311,6 +374,8 @@ public class DictionaryTree {
      */
     
     int size(){ //DONE
+        
+        // My implementation before folding
         
 //        BiFunction<DictionaryTree,Map<Character, DictionaryTree>, Integer> sizeFold = (myDict, myKids) -> {
 //          Integer size = 0;
@@ -389,7 +454,7 @@ public class DictionaryTree {
     /**
      * Folds the tree using the given function. Each of this node's
      * children is folded with the same function, and these results
-     * are stored in a collection, cResults, say, then the final
+     * are stored in a collection, Results, say, then the final
      * result is calculated using f.apply(this, cResults).
      *
      * @param f   the summarising function, which is passed the result of invoking the given function
