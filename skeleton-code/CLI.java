@@ -1,6 +1,4 @@
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
-import javax.sound.midi.Soundbank;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -22,14 +20,14 @@ public class CLI {
      * @throws IOException if there was a problem opening/reading from the file
      */
     
-    static int popularity = 1;
+    static int popularity = -1;
     static DictionaryTree loadWords(File f) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
             String word;
             DictionaryTree d = new DictionaryTree();
             while ((word = reader.readLine()) != null) {
                 d.insert(word,popularity);
-                popularity++;
+                popularity--;
             }
             return d;
         }
@@ -54,7 +52,7 @@ public class CLI {
         }
         return d;
     }
-
+    
     public static void main(String[] args) throws IOException {
         System.out.print("Loading dictionary ... ");
         DictionaryTree d = loadWords(new File(args[0]));

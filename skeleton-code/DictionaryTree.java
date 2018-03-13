@@ -17,6 +17,11 @@ public class DictionaryTree {
      * @param word the word to insert
      */
     void insert(String word) { //DONE
+        
+        if(word.equals(null)){
+            return;
+        }
+        
         insertionHelper(word,word);
     }
     
@@ -46,6 +51,9 @@ public class DictionaryTree {
      * @param popularity the popularity of the inserted word
      */
     void insert(String word, int popularity) {
+        if(word.equals(null)){
+            return;
+        }
         popInsertionHelper(word,word,popularity);
     }
     
@@ -55,7 +63,7 @@ public class DictionaryTree {
                 this.children.put(currentPortion.charAt(0), new DictionaryTree());
             }
             children.get(currentPortion.charAt(0)).myWord.completeWord = Optional.of(fullWord);
-            children.get(currentPortion.charAt(0)).myWord.popularity = popularity;
+            children.get(currentPortion.charAt(0)).myWord.popularity = Optional.of(popularity);
         }else{
             if(children.containsKey(currentPortion.charAt(0))){
                 children.get(currentPortion.charAt(0)).popInsertionHelper(currentPortion.substring(1), fullWord, popularity);
@@ -72,12 +80,16 @@ public class DictionaryTree {
      * Returns true if the caller can delete this node without losing
      * part of the dictionary, i.e. if this node has no children after
      * deleting the specified word.
+     * If the word passed is contained in the dictionary then we loop thorugh every character starting from the end and try to delete
+     * it from the tree.
      *
      * @param word the word to delete from this dictionary
      * @return whether or not the parent can delete this node from its children
      */
     boolean remove(String word) { //DONE
-
+        if(word.equals(null)){
+            return false;
+        }
         if(contains(word)){
             int counter = word.length() - 1;
             for (int i = counter; i >= 0; i--) {
@@ -91,13 +103,25 @@ public class DictionaryTree {
         
     }
     
+    /**
+     * When given the word we want to remove from the dictionary, this method will traverse the tree and  starting from the last
+     * character in the word, remove each element of the word in the appropriate manner depending on the elements around it.
+     *
+     * @param currentPortion the current Portion of the  portion of the word we want to get to delete from this dictionary
+     *                       This starts as the full word and each iteration in the for loop removes a letter off of the end of the word
+     *                       so that we can assess what to do with that letter.
+     * @param letter the letter which we are currently considering for deletion from the tree.
+     * @param fullWord the full word which we want to dellete
+     * @return whether or not the parent can delete this node from its children
+     *
+     */
     void removalHelper(String currentPortion,Character letter,  String fullWord){
         if(currentPortion.length() == 1){
             if(children.get(letter).myWord.completeWord.equals(Optional.of(fullWord)) && children.get(letter).children.size() == 0){
                 children.remove(letter);
          }else if(children.get(letter).myWord.completeWord.equals(Optional.of(fullWord)) && children.get(letter).children.size() > 0){
                 children.get(letter).myWord.completeWord = Optional.empty();
-                children.get(letter).myWord.popularity = null;
+                children.get(letter).myWord.popularity = Optional.empty();
          }else if(!children.get(letter).myWord.completeWord.isPresent() && children.get(letter).children.size() > 0){
                 //do nothing
          }else if(!children.get(letter).myWord.completeWord.isPresent() && children.get(letter).children.size() == 0){
@@ -136,7 +160,7 @@ public class DictionaryTree {
      * if no such word is found.
      */
     Optional<String> predict(String prefix) { //DONE
-        if(prefix == null){
+        if(prefix.equals(null)){
             return Optional.empty();
         }
         if(prefix.length() == 1){
@@ -168,7 +192,7 @@ public class DictionaryTree {
      * @return the (at most) n most popular words with the specified prefix
      */
     List<String> predict(String prefix, int n) {
-        if(prefix == null){
+        if(prefix.equals(null)){
             return new ArrayList<>();
         }
         if(prefix.length() == 1){
@@ -179,7 +203,6 @@ public class DictionaryTree {
     }
     
     List<String> predictPopHelper(int n){
-        Optional<String> empty = Optional.of("No Prediction");
         List<Word> allWords = popAllWords();
         List<String> finals = new ArrayList<>();
         if(allWords.size() == 0){
@@ -214,15 +237,27 @@ public class DictionaryTree {
      * not prefixes of any other word.
      */
     int numLeaves() { //DONE
-        Integer numberOfLeaves = 0;
-        if(children.size() == 0){
-            numberOfLeaves = 1;
-        }else{
-            for (Map.Entry<Character, DictionaryTree> e : children.entrySet()){
-                numberOfLeaves += e.getValue().numLeaves();
+        return fold((tree, result) -> {
+            int numberOfLeaves = 0;
+            
+            for (int i : result) {
+                numberOfLeaves += i;
             }
-        }
-        return numberOfLeaves;
+            if(tree.children.isEmpty()){
+                numberOfLeaves+=1;
+            }
+            return numberOfLeaves;
+        });
+
+//        Integer numberOfLeaves = 0;
+//        if(children.size() == 0){
+//            numberOfLeaves = 1;
+//        }else{
+//            for (Map.Entry<Character, DictionaryTree> e : children.entrySet()){
+//                numberOfLeaves += e.getValue().numLeaves();
+//            }
+//        }
+//        return numberOfLeaves;
     }
 
     /**
@@ -230,24 +265,45 @@ public class DictionaryTree {
      */
     int maximumBranching() { //DONE
     
-        int maximum = Integer.MIN_VALUE;
-    
-        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
-            maximum = Math.max(maximum, e.getValue().children.size());
-    
-        return maximum;
+        return fold((tree, result) -> {
+            int maximum = Integer.MIN_VALUE;
+        
+            for (int i : result) {
+               maximum = Math.max(tree.children.size(), i);
+            }
+        
+            return maximum;
+        });
+        
+//        int maximum = Integer.MIN_VALUE;
+//
+//        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
+//            maximum = Math.max(maximum, e.getValue().children.size());
+//
+//        return maximum;
     }
 
     /**
      * @return the height of this tree, i.e. the length of the longest branch
      */
     int height() { //DONE
-        int height = -1;
     
-        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
-            height = Math.max(height,e.getValue().height());
-    
-        return 1+height;
+        return fold((tree, result) -> {
+            int height = -1;
+        
+            for (int i : result) {
+                height = Math.max(height, i);
+            }
+        
+            return height + 1;
+        });
+
+//        int height = -1;
+//
+//        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
+//            height = Math.max(height,e.getValue().height());
+//
+//        return 1+height;
     }
 
     /**
@@ -255,14 +311,33 @@ public class DictionaryTree {
      */
     
     int size(){ //DONE
-        int size = 1;
-    
-        for (Map.Entry<Character, DictionaryTree> child : children.entrySet()){
-            size += child.getValue().size();
         
-        }
-    
-        return size;
+//        BiFunction<DictionaryTree,Map<Character, DictionaryTree>, Integer> sizeFold = (myDict, myKids) -> {
+//          Integer size = 0;
+//          return size;
+//        };
+//
+//        return fold(sizeFold);
+        
+//        int size = 1;
+//
+//        for (Map.Entry<Character, DictionaryTree> child : children.entrySet()){
+//            size += child.getValue().size();
+//
+//        }
+//
+//        return size;
+        
+        return fold((tree, result) -> {
+            int size = 0;
+            
+            for (int i : result) {
+                size += i;
+            }
+            
+            return size + 1;
+        });
+        
     }
 
     /**
@@ -322,7 +397,14 @@ public class DictionaryTree {
      * @return the result of folding the tree using f
      */
     <A> A fold(BiFunction<DictionaryTree, Collection<A>, A> f) {
-        throw new RuntimeException("DictionaryTree.fold not implemented yet");
+
+        List<A> a = new ArrayList<>();
+        for (Map.Entry<Character, DictionaryTree> child : children.entrySet()){
+            A resultOfChild = child.getValue().fold(f);
+            a.add(resultOfChild);
+
+        }
+        return f.apply(this,a);
     }
     
 }
