@@ -1,6 +1,3 @@
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
-
-import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -146,10 +143,7 @@ public class DictionaryTree {
                 //do nothing
          }else if(!children.get(letter).myWord.completeWord.isPresent() && children.get(letter).children.size() == 0){
                 children.remove(letter);
-             
-             
          }
-         
         }else{
             children.get(currentPortion.charAt(0)).removalHelper(currentPortion.substring(1), letter, fullWord);
         }
@@ -187,7 +181,7 @@ public class DictionaryTree {
      */
     Optional<String> predict(String prefix) { //DONE
         Optional<String> optPrefix = Optional.ofNullable(prefix);
-        if(!optPrefix.isPresent() || optPrefix.get().length() == 0){
+        if(!optPrefix.isPresent() || optPrefix.get().length() == 0 || !prefixIsContained(prefix)){
             return Optional.empty();
         }
         if(prefix.length() == 1){
@@ -197,6 +191,18 @@ public class DictionaryTree {
         }
     }
     
+    //Checks if a prefix we want to predict in the tree is contained.
+    boolean prefixIsContained(String prefix){
+        if (prefix.length() == 1){
+            return children.containsKey(prefix.charAt(0));
+        }else{
+            if(children.containsKey(prefix.charAt(0))){
+                return children.get(prefix.charAt(0)).prefixIsContained(prefix.substring(1));
+            }else {
+                return false;
+            }
+        }
+    }
     
     /**
      * When the helper function is called, we have already traversed the tree up to a point where we are at the end of the string we want to predict
@@ -228,7 +234,7 @@ public class DictionaryTree {
     
         Optional<String> optPrefix = Optional.ofNullable(prefix);
         Optional<Integer> optPop = Optional.ofNullable(n);
-        if(!optPrefix.isPresent() || optPrefix.get().length() == 0 || !optPop.isPresent()){
+        if(!optPrefix.isPresent() || optPrefix.get().length() == 0 || !optPop.isPresent()|| !prefixIsContained(prefix)){
             return new ArrayList<>();
         }
 
@@ -360,13 +366,26 @@ public class DictionaryTree {
 //
 //            return height + 1;
 //        });
-
-        int height = -1;
-
-        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
-            height = Math.max(height,e.getValue().height());
-
-        return 1+height;
+    
+    
+        return fold((tree, result) -> {
+            int height = -1;
+        
+            for (int i : result) {
+                height = Math.max(height,i);
+            }
+            
+            
+            return height + 1;
+        });
+        
+        //My initial implementation
+//        int height = -1;
+//
+//        for (Map.Entry<Character, DictionaryTree> e : children.entrySet())
+//            height = Math.max(height,e.getValue().height());
+//
+//        return 1+height;
     }
 
     /**
@@ -376,13 +395,6 @@ public class DictionaryTree {
     int size(){ //DONE
         
         // My implementation before folding
-        
-//        BiFunction<DictionaryTree,Map<Character, DictionaryTree>, Integer> sizeFold = (myDict, myKids) -> {
-//          Integer size = 0;
-//          return size;
-//        };
-//
-//        return fold(sizeFold);
         
 //        int size = 1;
 //
@@ -465,8 +477,8 @@ public class DictionaryTree {
 
         List<A> a = new ArrayList<>();
         for (Map.Entry<Character, DictionaryTree> child : children.entrySet()){
-            A resultOfChild = child.getValue().fold(f);
-            a.add(resultOfChild);
+            A result = child.getValue().fold(f);
+            a.add(result);
 
         }
         return f.apply(this,a);
