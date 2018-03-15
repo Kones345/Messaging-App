@@ -64,7 +64,7 @@ public class CLI {
         System.out.println("Max branching: " + d.maximumBranching());
         System.out.println("Num Leaves: " + d.numLeaves());
         System.out.println("Number of words: " + d.allWords().size());
-        System.out.println("Trying to predict: chir " + d.predict("telep"));
+        System.out.println("Trying to predict: chir " + d.predict("ph",5));
 
 //
 

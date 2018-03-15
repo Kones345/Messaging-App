@@ -1,26 +1,78 @@
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * @author Kelsey McKenna
+ * @author Adam Kona
  */
 public class DictionaryTreeTests {
     
+    //Method to check that all children of leaves are empty and not null
+    private boolean allChildrenOLeavesAreEmptyNotNull(DictionaryTree d){
+        Optional<Boolean> emptyChildren = Optional.empty();
+        if(d.getChildren().size() == 0){
+            if(d.getChildren().isEmpty() && d.getChildren() != null){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            Optional <Boolean> isEmpty = emptyChildren;
+            for (Map.Entry<Character, DictionaryTree> e : d.getChildren().entrySet()){
+                isEmpty =  Optional.of(allChildrenOLeavesAreEmptyNotNull(e.getValue()));
+            }
+            return isEmpty.get();
+        }
+    }
     
-    static boolean notEmpty(String word){
+    //Method to check that all children of leaves have completed words
+    private boolean allLeavesHaveCompleteWords(DictionaryTree d){
+        Optional<Boolean> emptyChildren = Optional.empty();
+        if(d.getChildren().size() == 0){
+            if(d.myWord.completeWord.isPresent()){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            Optional <Boolean> isEmpty = emptyChildren;
+            for (Map.Entry<Character, DictionaryTree> e : d.getChildren().entrySet()){
+                isEmpty =  Optional.of(allChildrenOLeavesAreEmptyNotNull(e.getValue()));
+            }
+            return isEmpty.get();
+        }
+    }
+    //Method to chek all words have popularities
+    private boolean allLeavesHaveCompleteWordsAndPopularities(DictionaryTree d){
+        Optional<Boolean> emptyChildren = Optional.empty();
+        if(d.getChildren().size() == 0){
+            if(d.myWord.completeWord.isPresent() && d.myWord.popularity.isPresent()){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            Optional <Boolean> isEmpty = emptyChildren;
+            for (Map.Entry<Character, DictionaryTree> e : d.getChildren().entrySet()){
+                isEmpty =  Optional.of(allChildrenOLeavesAreEmptyNotNull(e.getValue()));
+            }
+            return isEmpty.get();
+        }
+    }
+    //Method to check that a word is not empty
+    private static boolean notEmpty(String word){
         Optional<String> optWord = Optional.ofNullable(word);
         return word.length() > 0 && optWord.isPresent();
     }
-    
-    static boolean treeIsEmpty(DictionaryTree d){
+    //Method to check that a tree is not empty
+    private boolean treeIsEmpty(DictionaryTree d){
         return d.height() == 0;
     }
-    
+    //Test to check that the height of a single dictionary tree node is 0
     @Test
     public void heightOfRootShouldBeZero() {
         //Pre-condition: tree is initially empty
@@ -30,10 +82,12 @@ public class DictionaryTreeTests {
         assert treeIsEmpty(unit);
         Assertions.assertEquals(0, unit.height());
     }
-
+    //Test to check that the height of a tree is the length of the longest word
     @Test
     public void heightOfWordShouldBeWordLength() {
         //Pre-condition: height is initially 0
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //Post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -46,11 +100,16 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
-    
+    //Test to check that the maximum branching is returned
     @Test
     public void maxBranching(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -71,12 +130,17 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
         
     }
-    
+    //Test to check that the size changes correctly with respect to removal
     @Test
     public void sizeBeforeAndAfterRemoval(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         //post-condition: all words is five less after removal
         //post-condition: height is zero
@@ -112,11 +176,15 @@ public class DictionaryTreeTests {
         assert treeIsEmpty(unit);
         assert sizeAfter == sizeBefore-5;
         assert heightBefore - heightAfter == 1;
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
     }
-    
+    //Test to check that the correct longest word is returned
     @Test
     public void longestWord(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -137,11 +205,16 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
-    
+    //Test to check that the correct number of leaves is returned
     @Test
     public void numLeaves(){
         //pre-condition: tree is initially empty
+        //Invariant: All leaves have empty children and not null children.
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         
@@ -163,11 +236,17 @@ public class DictionaryTreeTests {
         for(String s: unit.allWords()){
             assert notEmpty(s);
         }
-    }
     
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
+    }
+    //Test to check words removed are not contained
     @Test
     public void containsAndRemove(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -191,12 +270,17 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
     
-    
+    //Test to check that all words contains all the words that were inserted
     @Test
     public void allWordsInsertedAreReturned(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -219,11 +303,16 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
-    
+    //Test to check that all inserted words are contained in the tree
     @Test
     public void insertedWordsAreContained(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty and has no empty strings
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -245,11 +334,16 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
-    
+    //Test to check that we can predict a word without popularity
     @Test
     public void predictReturnsValidWordWithoutPopularity(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -270,11 +364,17 @@ public class DictionaryTreeTests {
             assert notEmpty(s);
         }
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWords(unit);
     }
-    
+    //Test to check that we can predict words with popularity
     @Test
     public void predictReturnsValidWordWithPopularity(){
         //pre-condition: tree is initially empty
+        //Invariant: Children of leaves are empty and not null
+        //Invariant: All leaves have complete words
+        //Invariant: All leave have complete words and popularity
         //post-condition: tree is non-empty
         DictionaryTree unit = new DictionaryTree();
         //pre-condition
@@ -289,7 +389,7 @@ public class DictionaryTreeTests {
         unit.insert("amazing",3);
         unit.insert("absolutely",2);
         
-        List<String> predictions = new ArrayList<String>();
+        List<String> predictions = new ArrayList<>();
         predictions.add("and");
         predictions.add("andover");
         predictions.add("abba");
@@ -301,5 +401,9 @@ public class DictionaryTreeTests {
         }
     
         assert !treeIsEmpty(unit);
+        //Invariants
+        assert allChildrenOLeavesAreEmptyNotNull(unit);
+        assert allLeavesHaveCompleteWordsAndPopularities(unit);;
+        
     }
 }

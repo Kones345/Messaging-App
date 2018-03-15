@@ -484,4 +484,8 @@ public class DictionaryTree {
         return f.apply(this,a);
     }
     
+    public Map<Character, DictionaryTree> getChildren(){
+        return this.children;
+    }
+    
 }
